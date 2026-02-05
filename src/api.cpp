@@ -143,10 +143,10 @@ void api_print_result() {
 }
 
 // ==========================================
-// تشغيل جميع الخوارزميات
+// Run All Algorithms
 // ==========================================
 void api_run_all_algorithms(int time_quantum = DEFAULT_TIME_QUANTUM) {
-    cout << "\n====== تشغيل جميع الخوارزميات ======\n" << endl;
+    cout << "\n====== Running All Algorithms ======\n" << endl;
     
     for (int algo = 1; algo <= 6; algo++) {
         api_run_algorithm(algo, time_quantum);
