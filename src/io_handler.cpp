@@ -170,11 +170,12 @@ void print_menu() {
     cout << "4. Priority Non-Preemptive" << endl;
     cout << "5. Priority Preemptive" << endl;
     cout << "6. Round Robin" << endl;
-    cout << "7. تشغيل جميع الخوارزميات" << endl;
-    cout << "8. تحميل من ملف" << endl;
-    cout << "9. إدخال يدوي" << endl;
-    cout << "0. خروج" << endl;
-    cout << "اختر خيار: ";
+    cout << "7. Run All Algorithms" << endl;
+    cout << "8. Load from File" << endl;
+    cout << "9. Manual Input" << endl;
+    cout << "10. Data Structures Demo" << endl;
+    cout << "0. Exit" << endl;
+    cout << "Enter choice: ";
 }
 
 // ==========================================

@@ -1,15 +1,15 @@
 ﻿/**
  * @file main.cpp
- * @brief الملف الرئيسي - محاكي جدولة المعالج
+ * @brief Main File - CPU Scheduling Simulator
  * 
  * @author Ahmed
  * @date 2024
  * 
- * يدعم:
- * - 6 خوارزميات جدولة
- * - إدخال يدوي أو من ملف
- * - طباعة مخطط Gantt
- * - حساب الإحصائيات
+ * Features:
+ * - 6 scheduling algorithms
+ * - Manual input or from file
+ * - Gantt chart printing
+ * - Statistics calculation
  */
 
 #include "src/api.cpp"
@@ -17,21 +17,21 @@
 using namespace std;
 
 // ==========================================
-// دالة الإدخال اليدوي
+// Manual Input Function
 // ==========================================
 void manual_input() {
     api_reset();
     
     int n;
-    cout << "عدد العمليات: ";
+    cout << "Number of processes: ";
     cin >> n;
     
     if (n <= 0 || n > MAX_PROCESSES) {
-        cout << "عدد غير صالح!" << endl;
+        cout << "Invalid number!" << endl;
         return;
     }
     
-    cout << "\nأدخل بيانات كل عملية:" << endl;
+    cout << "\nEnter data for each process:" << endl;
     cout << "(Arrival Time, Burst Time, Priority)" << endl;
     
     for (int i = 0; i < n; i++) {
@@ -45,11 +45,11 @@ void manual_input() {
 }
 
 // ==========================================
-// دالة تحميل من ملف
+// Load from File Function
 // ==========================================
 bool load_from_file() {
     string filename;
-    cout << "اسم الملف: ";
+    cout << "Filename: ";
     cin >> filename;
     
     if (api_load_from_file(filename.c_str())) {
@@ -60,11 +60,11 @@ bool load_from_file() {
 }
 
 // ==========================================
-// تشغيل خوارزمية واحدة
+// Run Single Algorithm
 // ==========================================
 void run_single_algorithm(int algo) {
     if (api_process_count == 0) {
-        cout << "لا توجد عمليات! أدخل عمليات أولاً." << endl;
+        cout << "No processes! Please add processes first." << endl;
         return;
     }
     
@@ -86,7 +86,7 @@ void run_single_algorithm(int algo) {
 }
 
 // ==========================================
-// عرض توضيحي لهياكل البيانات
+// Data Structures Demo
 // ==========================================
 void demo_data_structures() {
     cout << "\n=== Data Structures Demo ===\n";
@@ -142,14 +142,14 @@ void demo_data_structures() {
 }
 
 // ==========================================
-// الدالة الرئيسية
+// Main Function
 // ==========================================
 int main(int argc, char* argv[]) {
     cout << "======================================" << endl;
     cout << "   CPU Scheduling Algorithms Simulator" << endl;
     cout << "======================================" << endl;
     
-    // وضع سطر الأوامر
+    // Command line mode
     if (argc >= 2) {
         string command = argv[1];
         
@@ -190,7 +190,7 @@ int main(int argc, char* argv[]) {
         
         if (!filename.empty()) {
             if (!api_load_from_file(filename.c_str())) {
-                cout << "فشل تحميل الملف!" << endl;
+                cout << "Failed to load file!" << endl;
                 return 1;
             }
             print_processes(api_processes, api_process_count);
@@ -208,7 +208,7 @@ int main(int argc, char* argv[]) {
         return 0;
     }
     
-    // الوضع التفاعلي
+    // Interactive mode
     int choice;
     do {
         print_menu();
@@ -225,7 +225,7 @@ int main(int argc, char* argv[]) {
                     cin >> q;
                     api_run_all_algorithms(q);
                 } else {
-                    cout << "لا توجد عمليات!" << endl;
+                    cout << "No processes!" << endl;
                 }
                 break;
             case 8:
@@ -238,10 +238,10 @@ int main(int argc, char* argv[]) {
                 demo_data_structures();
                 break;
             case 0:
-                cout << "شكراً لاستخدام البرنامج!" << endl;
+                cout << "Thank you for using the program!" << endl;
                 break;
             default:
-                cout << "خيار غير صالح!" << endl;
+                cout << "Invalid choice!" << endl;
         }
     } while (choice != 0);
     
