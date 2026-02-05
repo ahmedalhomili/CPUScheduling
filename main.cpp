@@ -215,30 +215,27 @@ int main(int argc, char* argv[]) {
         cin >> choice;
         
         switch (choice) {
-            case 1: case 2: case 3: case 4: case 5: case 6:
-                run_single_algorithm(choice);
+            case 1:
+                load_from_file();
                 break;
-            case 7:
+            case 2:
+                manual_input();
+                break;
+            case 3: case 4: case 5: case 6: case 7: case 8:
+                run_single_algorithm(choice - 2);  // 3->1, 4->2, etc.
+                break;
+            case 9:
                 if (api_process_count > 0) {
                     int q;
                     cout << "Time Quantum for Round Robin: ";
                     cin >> q;
                     api_run_all_algorithms(q);
                 } else {
-                    cout << "No processes!" << endl;
+                    cout << "No processes! Use [1] or [2] first." << endl;
                 }
                 break;
-            case 8:
-                load_from_file();
-                break;
-            case 9:
-                manual_input();
-                break;
-            case 10:
-                demo_data_structures();
-                break;
             case 0:
-                cout << "Thank you for using the program!" << endl;
+                cout << "Goodbye!" << endl;
                 break;
             default:
                 cout << "Invalid choice!" << endl;
