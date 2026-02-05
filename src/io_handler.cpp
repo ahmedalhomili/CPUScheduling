@@ -1,11 +1,11 @@
 /**
  * @file io_handler.cpp
- * @brief التعامل مع الملفات والطباعة
+ * @brief File and Print Handling
  * 
- * يحتوي على:
- * - تحميل العمليات من ملف
- * - طباعة النتائج
- * - طباعة مخطط Gantt
+ * Contains:
+ * - Load processes from file
+ * - Print results
+ * - Print Gantt chart
  */
 
 #ifndef IO_HANDLER_CPP_INCLUDED
@@ -19,19 +19,19 @@
 using namespace std;
 
 // ==========================================
-// تحميل العمليات من ملف
+// Load Processes from File
 // ==========================================
 int load_processes_from_file(const char* filename, Process processes[]) {
     ifstream file(filename);
     if (!file.is_open()) {
-        cout << "خطأ: لا يمكن فتح الملف " << filename << endl;
+        cout << "Error: Cannot open file " << filename << endl;
         return -1;
     }
     
     string line;
     int count = 0;
     
-    // تخطي سطر العناوين
+    // Skip header line
     getline(file, line);
     
     while (getline(file, line) && count < MAX_PROCESSES) {
@@ -41,12 +41,12 @@ int load_processes_from_file(const char* filename, Process processes[]) {
         int id, arrival, burst, priority;
         char comma;
         
-        // قراءة بصيغة CSV
+        // Read CSV format
         if (ss >> id >> comma >> arrival >> comma >> burst >> comma >> priority) {
             processes[count] = create_process(id, arrival, burst, priority);
             count++;
         } else {
-            // محاولة قراءة بدون فواصل
+            // Try reading without commas
             ss.clear();
             ss.str(line);
             if (ss >> id >> arrival >> burst >> priority) {
@@ -61,10 +61,10 @@ int load_processes_from_file(const char* filename, Process processes[]) {
 }
 
 // ==========================================
-// طباعة معلومات العمليات
+// Print Processes Information
 // ==========================================
 void print_processes(Process processes[], int count) {
-    cout << "\n=== العمليات المدخلة ===" << endl;
+    cout << "\n=== Input Processes ===" << endl;
     cout << "+-----+------------+------------+------------+" << endl;
     cout << "| ID  | Arrival    | Burst      | Priority   |" << endl;
     cout << "+-----+------------+------------+------------+" << endl;
@@ -79,14 +79,14 @@ void print_processes(Process processes[], int count) {
 }
 
 // ==========================================
-// طباعة النتائج
+// Print Results
 // ==========================================
 void print_result(const SchedulingResult& result) {
     cout << "\n========================================" << endl;
-    cout << "الخوارزمية: " << result.algorithm_name << endl;
+    cout << "Algorithm: " << result.algorithm_name << endl;
     cout << "========================================" << endl;
     
-    cout << "\n--- نتائج العمليات ---" << endl;
+    cout << "\n--- Process Results ---" << endl;
     cout << "+-----+----------+----------+----------+----------+----------+" << endl;
     cout << "| ID  | Arrival  | Burst    | Start    | Complete | Wait     |" << endl;
     cout << "+-----+----------+----------+----------+----------+----------+" << endl;
@@ -102,20 +102,20 @@ void print_result(const SchedulingResult& result) {
     }
     cout << "+-----+----------+----------+----------+----------+----------+" << endl;
     
-    cout << "\n--- الإحصائيات ---" << endl;
+    cout << "\n--- Statistics ---" << endl;
     cout << fixed << setprecision(2);
-    cout << "متوسط وقت الانتظار: " << result.avg_waiting_time << endl;
-    cout << "متوسط وقت الدوران: " << result.avg_turnaround_time << endl;
-    cout << "استخدام المعالج: " << result.cpu_utilization << "%" << endl;
+    cout << "Average Waiting Time: " << result.avg_waiting_time << endl;
+    cout << "Average Turnaround Time: " << result.avg_turnaround_time << endl;
+    cout << "CPU Utilization: " << result.cpu_utilization << "%" << endl;
 }
 
 // ==========================================
-// طباعة مخطط Gantt
+// Print Gantt Chart
 // ==========================================
 void print_gantt_chart(const SchedulingResult& result) {
-    cout << "\n--- مخطط Gantt ---" << endl;
+    cout << "\n--- Gantt Chart ---" << endl;
     
-    // الخط العلوي
+    // Top line
     cout << "+";
     for (int i = 0; i < result.timeline_length; i++) {
         int duration = result.timeline[i].end_time - result.timeline[i].start_time;
@@ -124,7 +124,7 @@ void print_gantt_chart(const SchedulingResult& result) {
     }
     cout << endl;
     
-    // أسماء العمليات
+    // Process names
     cout << "|";
     for (int i = 0; i < result.timeline_length; i++) {
         int duration = result.timeline[i].end_time - result.timeline[i].start_time;
@@ -140,7 +140,7 @@ void print_gantt_chart(const SchedulingResult& result) {
     }
     cout << endl;
     
-    // الخط السفلي
+    // Bottom line
     cout << "+";
     for (int i = 0; i < result.timeline_length; i++) {
         int duration = result.timeline[i].end_time - result.timeline[i].start_time;
@@ -149,7 +149,7 @@ void print_gantt_chart(const SchedulingResult& result) {
     }
     cout << endl;
     
-    // الأوقات
+    // Time markers
     cout << result.timeline[0].start_time;
     for (int i = 0; i < result.timeline_length; i++) {
         int duration = result.timeline[i].end_time - result.timeline[i].start_time;
@@ -160,10 +160,14 @@ void print_gantt_chart(const SchedulingResult& result) {
 }
 
 // ==========================================
-// طباعة القائمة
+// Print Menu
 // ==========================================
 void print_menu() {
     cout << "\n=== CPU Scheduling Simulator ===" << endl;
+    cout << "--- First, load processes: ---" << endl;
+    cout << "8. Load from File" << endl;
+    cout << "9. Manual Input" << endl;
+    cout << "--- Then, run an algorithm: ---" << endl;
     cout << "1. FCFS (First Come First Serve)" << endl;
     cout << "2. SJF Non-Preemptive" << endl;
     cout << "3. SJF Preemptive (SRTF)" << endl;
@@ -171,20 +175,19 @@ void print_menu() {
     cout << "5. Priority Preemptive" << endl;
     cout << "6. Round Robin" << endl;
     cout << "7. Run All Algorithms" << endl;
-    cout << "8. Load from File" << endl;
-    cout << "9. Manual Input" << endl;
+    cout << "--- Other options: ---" << endl;
     cout << "10. Data Structures Demo" << endl;
     cout << "0. Exit" << endl;
     cout << "Enter choice: ";
 }
 
 // ==========================================
-// حفظ النتائج لملف
+// Save Results to File
 // ==========================================
 bool save_result_to_file(const SchedulingResult& result, const char* filename) {
     ofstream file(filename);
     if (!file.is_open()) {
-        cout << "خطأ: لا يمكن فتح الملف للكتابة" << endl;
+        cout << "Error: Cannot open file for writing" << endl;
         return false;
     }
     
@@ -212,7 +215,7 @@ bool save_result_to_file(const SchedulingResult& result, const char* filename) {
     }
     
     file.close();
-    cout << "تم حفظ النتائج في: " << filename << endl;
+    cout << "Results saved to: " << filename << endl;
     return true;
 }
 
