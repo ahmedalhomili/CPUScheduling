@@ -1,6 +1,6 @@
 /**
  * @file types.cpp
- * @brief تعريف الأنواع الأساسية والثوابت ودوالها
+ * @brief Definition of basic types, constants and their functions
  */
 
 #ifndef TYPES_CPP_INCLUDED
@@ -14,14 +14,14 @@
 using namespace std;
 
 // ==========================================
-// الثوابت
+// Constants
 // ==========================================
 const int MAX_PROCESSES = 100;
 const int MAX_TIMELINE = 1000;
 const int DEFAULT_TIME_QUANTUM = 2;
 
 // ==========================================
-// هيكل العملية
+// Process Structure
 // ==========================================
 struct Process {
     int id;
@@ -37,7 +37,7 @@ struct Process {
 };
 
 // ==========================================
-// سجل التنفيذ
+// Execution Record
 // ==========================================
 struct ExecutionRecord {
     int process_id;
@@ -46,7 +46,7 @@ struct ExecutionRecord {
 };
 
 // ==========================================
-// نتيجة الجدولة
+// Scheduling Result
 // ==========================================
 struct SchedulingResult {
     char algorithm_name[64];
@@ -60,10 +60,10 @@ struct SchedulingResult {
 };
 
 // ==========================================
-// دوال العمليات
+// Process Functions
 // ==========================================
 
-// إنشاء عملية جديدة
+// Create new process
 Process create_process(int id, int arrival, int burst, int priority = 1) {
     Process p;
     p.id = id;
@@ -79,7 +79,7 @@ Process create_process(int id, int arrival, int burst, int priority = 1) {
     return p;
 }
 
-// إعادة تعيين العملية
+// Reset process
 void reset_process(Process& p) {
     p.remaining_time = p.burst_time;
     p.waiting_time = 0;
