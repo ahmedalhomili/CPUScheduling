@@ -1,0 +1,7 @@
+﻿# Sample Input Data for CPU Scheduling
+# Format: id,arrival_time,burst_time,priority
+1,0,6,2
+2,1,8,1
+3,2,7,3
+4,3,3,4
+5,4,4,2
