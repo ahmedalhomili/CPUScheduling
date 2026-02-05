@@ -163,22 +163,19 @@ void print_gantt_chart(const SchedulingResult& result) {
 // Print Menu
 // ==========================================
 void print_menu() {
-    cout << "\n=== CPU Scheduling Simulator ===" << endl;
-    cout << "--- First, load processes: ---" << endl;
-    cout << "8. Load from File" << endl;
-    cout << "9. Manual Input" << endl;
-    cout << "--- Then, run an algorithm: ---" << endl;
-    cout << "1. FCFS (First Come First Serve)" << endl;
-    cout << "2. SJF Non-Preemptive" << endl;
-    cout << "3. SJF Preemptive (SRTF)" << endl;
-    cout << "4. Priority Non-Preemptive" << endl;
-    cout << "5. Priority Preemptive" << endl;
-    cout << "6. Round Robin" << endl;
-    cout << "7. Run All Algorithms" << endl;
-    cout << "--- Other options: ---" << endl;
-    cout << "10. Data Structures Demo" << endl;
-    cout << "0. Exit" << endl;
-    cout << "Enter choice: ";
+    cout << "\n========== CPU Scheduling Simulator ==========" << endl;
+    cout << "[1] Load from File" << endl;
+    cout << "[2] Manual Input" << endl;
+    cout << "[3] FCFS" << endl;
+    cout << "[4] SJF Non-Preemptive" << endl;
+    cout << "[5] SJF Preemptive (SRTF)" << endl;
+    cout << "[6] Priority Non-Preemptive" << endl;
+    cout << "[7] Priority Preemptive" << endl;
+    cout << "[8] Round Robin" << endl;
+    cout << "[9] Run All Algorithms" << endl;
+    cout << "[0] Exit" << endl;
+    cout << "===============================================" << endl;
+    cout << "Choice: ";
 }
 
 // ==========================================
