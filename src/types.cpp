@@ -7,9 +7,6 @@
 #define TYPES_CPP_INCLUDED
 
 #include <iostream>
-#include <string>
-#include <cstring>
-#include <cstdlib>
 
 using namespace std;
 

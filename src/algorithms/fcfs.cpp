@@ -9,6 +9,8 @@
 #ifndef FCFS_CPP_INCLUDED
 #define FCFS_CPP_INCLUDED
 
+#include <cstring>
+
 #include "../data_structures/queue.cpp"
 
 using namespace std;
