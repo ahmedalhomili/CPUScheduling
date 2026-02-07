@@ -85,6 +85,7 @@ SchedulingResult* api_run_algorithm(int algorithm_id, int time_quantum = DEFAULT
             return nullptr;
     }
     
+    calculate_statistics(api_last_result);
     return &api_last_result;
 }
 
