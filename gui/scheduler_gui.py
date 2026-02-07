@@ -464,10 +464,16 @@ def main(page: ft.Page):
     def load_sample(e):
         nonlocal processes
         processes = [
-            Process(1, 0, 5, 2),
-            Process(2, 1, 3, 1),
-            Process(3, 2, 8, 3),
-            Process(4, 3, 6, 4),
+            Process(1, 0, 7, 2),
+            Process(2, 1, 4, 1),
+            Process(3, 2, 9, 3),
+            Process(4, 3, 5, 2),
+            Process(5, 4, 2, 4),
+            Process(6, 5, 6, 1),
+            Process(7, 6, 3, 5),
+            Process(8, 7, 8, 2),
+            Process(9, 8, 4, 3),
+            Process(10, 9, 5, 4),
         ]
         update_process_list()
     
