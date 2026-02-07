@@ -145,9 +145,18 @@ void demo_data_structures() {
 // Main Function
 // ==========================================
 int main(int argc, char* argv[]) {
-    cout << "======================================" << endl;
-    cout << "   CPU Scheduling Algorithms Simulator" << endl;
-    cout << "======================================" << endl;
+    
+    // Check for JSON mode first (no banner output)
+    bool has_json = false;
+    for (int i = 1; i < argc; i++) {
+        if (string(argv[i]) == "--json") { has_json = true; break; }
+    }
+    
+    if (!has_json) {
+        cout << "======================================" << endl;
+        cout << "   CPU Scheduling Algorithms Simulator" << endl;
+        cout << "======================================" << endl;
+    }
     
     // Command line mode
     if (argc >= 2) {
@@ -160,6 +169,7 @@ int main(int argc, char* argv[]) {
             cout << "  scheduler --algo <1-6>       - Run specific algorithm" << endl;
             cout << "  scheduler --quantum <n>      - Set time quantum for RR" << endl;
             cout << "  scheduler --all              - Run all algorithms" << endl;
+            cout << "  scheduler --json             - Output results as JSON (for GUI)" << endl;
             cout << "\nAlgorithms:" << endl;
             cout << "  1 - FCFS" << endl;
             cout << "  2 - SJF Non-Preemptive" << endl;
@@ -174,10 +184,14 @@ int main(int argc, char* argv[]) {
         int algo = 0;
         int quantum = DEFAULT_TIME_QUANTUM;
         bool run_all = false;
+        bool json_mode = false;
         
+        // JSON mode: --json <algo> <quantum> <count> <a1 b1 p1> <a2 b2 p2> ...
         for (int i = 1; i < argc; i++) {
             string arg = argv[i];
-            if (arg == "--file" && i + 1 < argc) {
+            if (arg == "--json") {
+                json_mode = true;
+            } else if (arg == "--file" && i + 1 < argc) {
                 filename = argv[++i];
             } else if (arg == "--algo" && i + 1 < argc) {
                 algo = stoi(argv[++i]);
@@ -186,6 +200,34 @@ int main(int argc, char* argv[]) {
             } else if (arg == "--all") {
                 run_all = true;
             }
+        }
+        
+        // JSON mode for GUI integration
+        if (json_mode) {
+            // Read processes from stdin: count, then each line: arrival burst priority
+            int count;
+            cin >> count;
+            api_reset();
+            for (int i = 0; i < count; i++) {
+                int arrival, burst, priority;
+                cin >> arrival >> burst >> priority;
+                api_add_process(i + 1, arrival, burst, priority);
+            }
+            
+            if (run_all) {
+                cout << "[" << endl;
+                for (int a = 1; a <= 6; a++) {
+                    if (a == 6) quantum = quantum; // use provided quantum for RR
+                    api_run_algorithm(a, quantum);
+                    cout << api_get_result_json();
+                    if (a < 6) cout << ",";
+                }
+                cout << "]" << endl;
+            } else if (algo >= 1 && algo <= 6) {
+                api_run_algorithm(algo, quantum);
+                cout << api_get_result_json();
+            }
+            return 0;
         }
         
         if (!filename.empty()) {
