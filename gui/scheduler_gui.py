@@ -466,14 +466,7 @@ def main(page: ft.Page):
         processes = [
             Process(1, 0, 7, 2),
             Process(2, 1, 4, 1),
-            Process(3, 2, 9, 3),
-            Process(4, 3, 5, 2),
-            Process(5, 4, 2, 4),
-            Process(6, 5, 6, 1),
-            Process(7, 6, 3, 5),
-            Process(8, 7, 8, 2),
-            Process(9, 8, 4, 3),
-            Process(10, 9, 5, 4),
+            Process(3, 2, 9, 3)
         ]
         update_process_list()
     
