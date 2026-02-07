@@ -1,21 +1,31 @@
 # Security Policy
 
+## Project Overview
+
+This is an **educational CPU Scheduling Simulator** project. It is not a production application and does not handle sensitive data.
+
 ## Supported Versions
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+| Component | Version | Status |
+| --------- | ------- | ------ |
+| C++ Backend (sched2.exe) | 1.0 | ✅ Current |
+| Python GUI (Flet) | 0.80.5 | ✅ Current |
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Architecture & Security Notes
 
-## Reporting a Vulnerability
+- **C++ Backend**: Compiled with MinGW g++ 13.1.0 (C++17). Uses custom data structures with `malloc/free`. No network access.
+- **Python GUI**: Uses Flet 0.80.5. Connects to C++ backend via `subprocess` (local process only, no network).
+- **Data Flow**: User input → Python GUI → stdin to sched2.exe → JSON stdout → Python parses and displays.
+- **No external dependencies** in C++ (standard headers only: iostream, string, cstring, cstdlib, fstream, iomanip, sstream).
 
-Use this section to tell people how to report a vulnerability.
+## Memory Management
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+The C++ code uses `malloc/free` for custom data structures. All allocated memory is freed via `*_destroy()` functions:
+- `queue_destroy()`
+- `pq_destroy()`
+- `list_destroy()`
+- `stack_destroy()`
+
+## Reporting Issues
+
+Since this is an educational project, please report any issues via GitHub Issues.

@@ -5,37 +5,34 @@
 ## 📋 نظرة عامة
 
 مشروع محاكاة خوارزميات جدولة العمليات في نظام التشغيل.
-- مكتوب بلغة **C++** 
-- واجهة رسومية بـ Python/Flet
+- **Backend**: مكتوب بلغة C++ (Procedural - بدون OOP)
+- **Frontend**: واجهة رسومية بـ Python/Flet 0.80.5
+- **التكامل**: Python تستدعي C++ exe عبر `subprocess` + JSON API
+- **بنى البيانات**: مبنية من الصفر بـ `malloc/free` - بدون STL
 
 ---
 
-## 🔧 الخوارزميات (4 خوارزميات)
+## 🔧 الخوارزميات (6 خوارزميات)
 
-| # | الخوارزمية | الوصف | الملف |
-|---|------------|-------|-------|
-| 1 | **FCFS** | First Come First Serve - أول من يصل أولاً | `fcfs.cpp` |
-| 2 | **SJF** | Shortest Job First - أقصر عملية أولاً | `sjf.cpp` |
-| 3 | **Priority** | جدولة الأولوية | `priority.cpp` |
-| 4 | **Round Robin** | الجدولة الدائرية | `round_robin.cpp` |
-
-### تفاصيل الخوارزميات:
-
-- **FCFS**: غير استباقية - العملية التي تصل أولاً تُنفذ أولاً
-- **SJF**: نسختين (Non-Preemptive & Preemptive/SRTF)
-- **Priority**: نسختين (Non-Preemptive & Preemptive) - الرقم الأصغر = أولوية أعلى
-- **Round Robin**: كل عملية تأخذ شريحة زمنية (Time Quantum)
+| # | الخوارزمية | النوع | بنية البيانات | الملف |
+|---|------------|-------|---------------|-------|
+| 1 | **FCFS** | Non-Preemptive | Queue (طابور) | `fcfs.cpp` |
+| 2 | **SJF Non-Preemptive** | Non-Preemptive | Priority Queue (Min-Heap) | `sjf.cpp` |
+| 3 | **SJF Preemptive (SRTF)** | Preemptive | Priority Queue (Min-Heap) | `sjf.cpp` |
+| 4 | **Priority Non-Preemptive** | Non-Preemptive | Linked List (مزدوجة) | `priority.cpp` |
+| 5 | **Priority Preemptive** | Preemptive | Linked List (مزدوجة) | `priority.cpp` |
+| 6 | **Round Robin** | Preemptive | Queue (طابور) | `round_robin.cpp` |
 
 ---
 
-## 📦 بنى البيانات (4 بنى)
+## 📦 بنى البيانات (4 بنى - مبنية من الصفر)
 
-| # | البنية | الوصف | الاستخدام |
-|---|--------|-------|-----------|
-| 1 | **Queue** | طابور FIFO | FCFS, Round Robin |
-| 2 | **Priority Queue** | Min-Heap | SJF, Priority |
-| 3 | **Linked List** | قائمة مترابطة مزدوجة | تخزين العمليات |
-| 4 | **Stack** | مكدس LIFO | تتبع التنفيذ |
+| # | البنية | الوصف | الخوارزمية المستخدمة فيها |
+|---|--------|-------|--------------------------|
+| 1 | **Queue** | طابور FIFO (`malloc/free`) | FCFS, Round Robin |
+| 2 | **Priority Queue** | Min-Heap (مصفوفة ديناميكية) | SJF NP, SRTF |
+| 3 | **Linked List** | قائمة مترابطة مزدوجة | Priority NP, Priority P |
+| 4 | **Stack** | مكدس LIFO | تتبع سجلات التنفيذ |
 
 ---
 
@@ -43,35 +40,40 @@
 
 ```
 CPUScheduling/
-├── main.cpp                              # البرنامج الرئيسي
-├── CMakeLists.txt                        # ملف البناء
-├── README.md                             # هذا الملف
+├── main.cpp                    # نقطة الدخول + Interactive/CLI/JSON modes
+├── sched2.exe                  # الملف التنفيذي (C++ backend)
+├── CMakeLists.txt              # ملف البناء CMake
+├── requirements.txt            # flet==0.80.5
 │
 ├── src/
-│   ├── types.cpp                         # الأنواع والثوابت الأساسية
-│   ├── api.cpp                           # واجهة برمجية للربط مع Python
-│   ├── io_handler.cpp                    # التعامل مع الملفات والطباعة
+│   ├── types.cpp               # الأنواع (Process, SchedulingResult, ExecutionRecord)
+│   ├── api.cpp                 # API + JSON output (api_get_result_json)
+│   ├── io_handler.cpp          # القوائم والطباعة والملفات
 │   │
-│   ├── algorithms/                       # ═══ الخوارزميات ═══
-│   │   ├── algorithms.cpp                # ملف تجميع (يتضمن الأربعة)
-│   │   ├── fcfs.cpp                      # FCFS
-│   │   ├── sjf.cpp                       # SJF (Non-Preemptive + Preemptive)
-│   │   ├── priority.cpp                  # Priority (Non-Preemptive + Preemptive)
-│   │   └── round_robin.cpp               # Round Robin
+│   ├── algorithms/
+│   │   ├── algorithms.cpp      # ملف تجميع (يتضمن الأربعة)
+│   │   ├── fcfs.cpp            # FCFS
+│   │   ├── sjf.cpp             # SJF NP + SRTF (Preemptive)
+│   │   ├── priority.cpp        # Priority NP + Priority P
+│   │   └── round_robin.cpp     # Round Robin
 │   │
-│   └── data_structures/                  # ═══ بنى البيانات ═══
-│       ├── queue.cpp                     # طابور FIFO
-│       ├── priority_queue.cpp            # طابور أولوية (Min-Heap)
-│       ├── linked_list.cpp               # قائمة مترابطة مزدوجة
-│       └── stack.cpp                     # مكدس LIFO
+│   └── data_structures/
+│       ├── queue.cpp           # Queue (FIFO) - malloc/free
+│       ├── priority_queue.cpp  # Priority Queue (Min-Heap)
+│       ├── linked_list.cpp     # Doubly Linked List
+│       └── stack.cpp           # Stack (LIFO)
 │
-├── data/                                 # ملفات الإدخال
+├── gui/
+│   └── scheduler_gui.py       # واجهة Flet (تستدعي sched2.exe عبر subprocess)
+│
+├── data/                       # ملفات إدخال تجريبية
 │   ├── sample_input.txt
-│   └── test_*.txt
+│   ├── test_5_processes.txt
+│   ├── test_8_processes.txt
+│   └── test_professor_sample.txt
 │
-└── gui/                                  # واجهة Python
-    ├── scheduler_gui.py                  # واجهة Flet
-    └── scheduler_api.py                  # API بايثون
+└── docs/
+    └── PROJECT_DOCUMENTATION.md
 ```
 
 ---
@@ -80,8 +82,8 @@ CPUScheduling/
 
 ```
 main.cpp
-└── src/api.cpp
-    └── src/io_handler.cpp
+└── src/api.cpp                 (JSON API + api_get_result_json)
+    └── src/io_handler.cpp      (print_menu, print_gantt_chart, file I/O)
         └── src/algorithms/algorithms.cpp
             │
             ├── fcfs.cpp ──────────► queue.cpp ──────────┐
@@ -93,23 +95,45 @@ main.cpp
             └── round_robin.cpp ───► stack.cpp ──────────┘
 ```
 
-**ملاحظة:** كل خوارزمية تستخدم بنية بيانات واحدة:
-| الخوارزمية | بنية البيانات |
-|------------|---------------|
-| FCFS | Queue (طابور) |
-| SJF | Priority Queue (طابور أولوية) |
-| Priority | Linked List (قائمة مترابطة) |
-| Round Robin | Stack (مكدس) + Queue |
+---
+
+## 🔌 التكامل: Python ↔ C++
+
+```
+Python GUI (Flet)                    C++ Backend (sched2.exe)
+┌─────────────┐                     ┌──────────────────────┐
+│ scheduler_  │  subprocess.run()   │                      │
+│ gui.py      │ ──────────────────► │  sched2.exe          │
+│             │  stdin: processes   │  --json --algo N     │
+│             │  stdout: JSON       │  --json --all        │
+│             │ ◄────────────────── │  --quantum Q         │
+└─────────────┘                     └──────────────────────┘
+```
+
+**stdin format**: `count\narrival burst priority\n...`
+**stdout format**: JSON with algorithm, processes, timeline, statistics
 
 ---
 
 ## 🛠️ البناء والتشغيل
 
 ### المتطلبات
-- CMake 3.20+
-- C++17 compiler (GCC, Clang, MSVC)
-- Python 3.8+ (للواجهة الرسومية)
-- Flet 0.28+ (للواجهة الرسومية)
+| المتطلب | الإصدار |
+|---------|---------|
+| C++ Standard | C++17 |
+| Compiler | GCC/MinGW (g++) |
+| Python | 3.8+ |
+| Flet | 0.80.5 |
+
+### البناء بـ g++ (MinGW)
+```bash
+# إضافة MinGW إلى PATH (إذا لزم الأمر)
+# Windows PowerShell:
+$env:Path = "F:\Program Files\JetBrains\CLion 2025.2.4\bin\mingw\bin;$env:Path"
+
+# البناء
+g++ -std=c++17 -o sched2.exe main.cpp
+```
 
 ### البناء باستخدام CMake
 ```bash
@@ -118,47 +142,67 @@ cmake ..
 cmake --build .
 ```
 
-### البناء المباشر بـ g++
-```bash
-g++ -std=c++17 -o scheduler main.cpp
-```
-
 ### التشغيل
+
 ```bash
-# الوضع التفاعلي
-./scheduler
+# الوضع التفاعلي (قائمة تفاعلية)
+./sched2.exe
 
 # تحميل من ملف
-./scheduler --file data/sample_input.txt
+./sched2.exe --file data/sample_input.txt
 
 # تشغيل خوارزمية محددة
-./scheduler --file data/sample_input.txt --algo 1
+./sched2.exe --file data/sample_input.txt --algo 1
 
-# المساعدة
-./scheduler --help
+# JSON API (للواجهة الرسومية)
+echo "3\n0 7 2\n1 4 1\n2 9 3" | ./sched2.exe --json --algo 1
+echo "3\n0 7 2\n1 4 1\n2 9 3" | ./sched2.exe --json --all --quantum 2
+
+# تشغيل الواجهة الرسومية
+pip install flet==0.80.5
+python gui/scheduler_gui.py
 ```
 
----
+### القائمة التفاعلية
 
-## 📄 صيغة ملف الإدخال
-
-```csv
-id,arrival_time,burst_time,priority
-1,0,6,2
-2,1,8,1
-3,2,7,3
-4,3,3,4
-5,4,4,2
+```
+========== CPU Scheduling Simulator ==========
+[1] Load from File
+[2] Manual Input
+[3] FCFS
+[4] SJF Non-Preemptive
+[5] SJF Preemptive (SRTF)
+[6] Priority Non-Preemptive
+[7] Priority Preemptive
+[8] Round Robin
+[9] Run All Algorithms
+[0] Exit
+===============================================
 ```
 
 ---
 
 ## 📊 الإحصائيات المحسوبة
 
+- ✅ وقت الإكمال (Completion Time) لكل عملية
+- ✅ وقت الانتظار (Waiting Time) لكل عملية
+- ✅ وقت الدوران (Turnaround Time) لكل عملية
 - ✅ متوسط وقت الانتظار (Average Waiting Time)
 - ✅ متوسط وقت الدوران (Average Turnaround Time)
-- ✅ نسبة استخدام المعالج (CPU Utilization)
-- ✅ مخطط Gantt
+- ✅ نسبة استخدام المعالج (CPU Utilization %)
+- ✅ مخطط Gantt (مدمج + لكل وحدة زمنية للخوارزميات الاستباقية)
+
+---
+
+## 📄 صيغة ملف الإدخال
+
+```
+3
+0 7 2
+1 4 1
+2 9 3
+```
+> السطر الأول: عدد العمليات. كل سطر بعده: `arrival_time burst_time priority`
 
 ---
 
@@ -168,30 +212,35 @@ id,arrival_time,burst_time,priority
 ```cpp
 SchedulingResult fcfs(Process[], int count);
 SchedulingResult sjf_non_preemptive(Process[], int count);
-SchedulingResult sjf_preemptive(Process[], int count);
+SchedulingResult sjf_preemptive(Process[], int count);          // SRTF
 SchedulingResult priority_non_preemptive(Process[], int count);
 SchedulingResult priority_preemptive(Process[], int count);
 SchedulingResult round_robin(Process[], int count, int quantum);
 ```
 
+### API (JSON Output)
+```cpp
+string api_get_result_json();   // Returns JSON for GUI integration
+```
+
 ### بنى البيانات
 ```cpp
-// Queue
+// Queue (FIFO)
 Queue* queue_create();
 void queue_enqueue(Queue*, Process);
 Process queue_dequeue(Queue*);
 
-// Priority Queue
+// Priority Queue (Min-Heap)
 PriorityQueue* pq_create(CompareFunction);
 void pq_insert(PriorityQueue*, Process);
 Process pq_extract_min(PriorityQueue*);
 
-// Linked List
+// Linked List (Doubly)
 LinkedList* list_create();
 void list_insert_back(LinkedList*, Process);
 Process list_remove_front(LinkedList*);
 
-// Stack
+// Stack (LIFO)
 Stack* stack_create();
 void stack_push(Stack*, Process);
 Process stack_pop(Stack*);
@@ -202,10 +251,10 @@ Process stack_pop(Stack*);
 ## 🎓 للتعلم
 
 هذا المشروع مصمم لتعلم:
-1. بنى البيانات (Queue, Priority Queue, Linked List, Stack)
-2. خوارزميات جدولة العمليات
-3. برمجة C++ بأسلوب إجرائي
-4. ربط C++ مع Python
+1. **بنى البيانات** - Queue, Priority Queue (Min-Heap), Linked List, Stack - من الصفر بـ malloc/free
+2. **خوارزميات جدولة المعالج** - 6 خوارزميات بأنماط مختلفة
+3. **برمجة C++ إجرائية** - Procedural Programming بدون OOP أو STL
+4. **تكامل اللغات** - ربط C++ مع Python عبر subprocess + JSON
 
 ---
 
