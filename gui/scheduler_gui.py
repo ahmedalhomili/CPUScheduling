@@ -4,6 +4,9 @@ Using Flet Framework
 Connects to C++ backend via subprocess
 """
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="flet")
+
 import flet as ft
 import subprocess
 import json
