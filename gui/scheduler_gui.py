@@ -505,7 +505,7 @@ def main(page: ft.Page):
                     height=45,
                     bgcolor=color,
                     border_radius=6,
-                    alignment=ft.alignment.center,
+                    alignment=ft.Alignment(0, 0),
                 )
             )
             markers.append(ft.Container(ft.Text(str(time), size=9), width=width))
@@ -552,7 +552,7 @@ def main(page: ft.Page):
                 ft.DataColumn(ft.Text("Turnaround")),
             ],
             rows=rows,
-            border=ft.border.all(1, "#444"),
+            border=ft.Border.all(1, "#444"),
             border_radius=8,
         )
         
@@ -593,7 +593,7 @@ def main(page: ft.Page):
             padding=20,
             bgcolor="#1e1e3f",
             border_radius=15,
-            border=ft.border.all(1, "#3a3a6a"),
+            border=ft.Border.all(1, "#3a3a6a"),
         )
     
     def create_comparison(results: List[dict]):
@@ -625,7 +625,7 @@ def main(page: ft.Page):
                         ft.DataColumn(ft.Text("CPU %")),
                     ],
                     rows=rows,
-                    border=ft.border.all(1, "#444"),
+                    border=ft.Border.all(1, "#444"),
                     border_radius=8,
                 ),
                 ft.Container(height=10),
@@ -635,7 +635,7 @@ def main(page: ft.Page):
             padding=20,
             bgcolor="#1e1e3f",
             border_radius=15,
-            border=ft.border.all(1, "#3a3a6a"),
+            border=ft.Border.all(1, "#3a3a6a"),
         )
     
     def run_algorithm(e):
@@ -669,7 +669,7 @@ def main(page: ft.Page):
                 ft.Icon(ft.Icons.MEMORY, size=35, color=ft.Colors.BLUE_400),
                 ft.Text("CPU Scheduling Simulator", size=26, weight=ft.FontWeight.BOLD),
             ], spacing=15),
-            margin=ft.margin.only(bottom=20),
+            margin=ft.Margin.only(bottom=20),
         ),
         
         # Add Process Section
@@ -678,10 +678,10 @@ def main(page: ft.Page):
                 ft.Text("Add Process", size=16, weight=ft.FontWeight.BOLD),
                 ft.Row([
                     arrival_input, burst_input, priority_input,
-                    ft.ElevatedButton("Add", icon=ft.Icons.ADD, on_click=add_process),
-                    ft.ElevatedButton("Sample", icon=ft.Icons.SCIENCE, on_click=load_sample),
-                    ft.ElevatedButton("Clear", icon=ft.Icons.DELETE, on_click=clear_all,
-                                     bgcolor=ft.Colors.RED_900),
+                    ft.Button("Add", icon=ft.Icons.ADD, on_click=add_process),
+                    ft.Button("Sample", icon=ft.Icons.SCIENCE, on_click=load_sample),
+                    ft.Button("Clear", icon=ft.Icons.DELETE, on_click=clear_all,
+                              bgcolor=ft.Colors.RED_900),
                 ], wrap=True, spacing=10),
             ], spacing=10),
             padding=15,
@@ -711,8 +711,8 @@ def main(page: ft.Page):
                 ft.Row([
                     algo_dropdown,
                     quantum_input,
-                    ft.ElevatedButton("Run", icon=ft.Icons.PLAY_ARROW, on_click=run_algorithm,
-                                     bgcolor=ft.Colors.GREEN_700, height=45),
+                    ft.Button("Run", icon=ft.Icons.PLAY_ARROW, on_click=run_algorithm,
+                              bgcolor=ft.Colors.GREEN_700, height=45),
                 ], wrap=True, spacing=10),
             ], spacing=10),
             padding=15,
@@ -728,4 +728,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=main, port=8551)
+    ft.app(main, port=8551)
