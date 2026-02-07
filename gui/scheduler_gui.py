@@ -129,9 +129,7 @@ class Scheduler:
         n = len(procs)
         current_time = 0
         completed = 0
-        execution = []
-        last_id = -1
-        last_start = 0
+        timeline = []  # per-unit timeline
         
         while completed < n:
             shortest = -1
@@ -145,26 +143,17 @@ class Scheduler:
             if shortest == -1:
                 arrivals = [p["arrival"] for p in procs if p["remaining"] > 0]
                 if arrivals:
-                    if last_id != -1:
-                        execution.append({"id": last_id, "duration": current_time - last_start})
                     next_arr = min(arrivals)
-                    execution.append({"id": -1, "duration": next_arr - current_time})
+                    for t in range(current_time, next_arr):
+                        timeline.append(-1)
                     current_time = next_arr
-                    last_id = -1
-                    last_start = current_time
                 continue
             
             p = procs[shortest]
             if p["response"] == -1:
                 p["response"] = current_time - p["arrival"]
             
-            if shortest != last_id and last_id != -1 and current_time > last_start:
-                execution.append({"id": last_id, "duration": current_time - last_start})
-                last_start = current_time
-            elif shortest != last_id:
-                last_start = current_time
-            
-            last_id = p["id"]
+            timeline.append(p["id"])
             p["remaining"] -= 1
             current_time += 1
             
@@ -172,10 +161,10 @@ class Scheduler:
                 p["completion"] = current_time
                 p["turnaround"] = p["completion"] - p["arrival"]
                 p["waiting"] = p["turnaround"] - p["burst"]
-                execution.append({"id": p["id"], "duration": current_time - last_start})
-                last_id = -1
-                last_start = current_time
                 completed += 1
+        
+        # Each time unit as a separate block (like RR style)
+        execution = [{"id": pid, "duration": 1} for pid in timeline]
         
         return Scheduler._format(procs, execution, "SRTF")
     
@@ -233,9 +222,7 @@ class Scheduler:
         n = len(procs)
         current_time = 0
         completed = 0
-        execution = []
-        last_id = -1
-        last_start = 0
+        timeline = []  # per-unit timeline
         
         while completed < n:
             highest = -1
@@ -249,26 +236,17 @@ class Scheduler:
             if highest == -1:
                 arrivals = [p["arrival"] for p in procs if p["remaining"] > 0]
                 if arrivals:
-                    if last_id != -1:
-                        execution.append({"id": last_id, "duration": current_time - last_start})
                     next_arr = min(arrivals)
-                    execution.append({"id": -1, "duration": next_arr - current_time})
+                    for t in range(current_time, next_arr):
+                        timeline.append(-1)
                     current_time = next_arr
-                    last_id = -1
-                    last_start = current_time
                 continue
             
             p = procs[highest]
             if p["response"] == -1:
                 p["response"] = current_time - p["arrival"]
             
-            if highest != last_id and last_id != -1 and current_time > last_start:
-                execution.append({"id": last_id, "duration": current_time - last_start})
-                last_start = current_time
-            elif highest != last_id:
-                last_start = current_time
-            
-            last_id = p["id"]
+            timeline.append(p["id"])
             p["remaining"] -= 1
             current_time += 1
             
@@ -276,10 +254,10 @@ class Scheduler:
                 p["completion"] = current_time
                 p["turnaround"] = p["completion"] - p["arrival"]
                 p["waiting"] = p["turnaround"] - p["burst"]
-                execution.append({"id": p["id"], "duration": current_time - last_start})
-                last_id = -1
-                last_start = current_time
                 completed += 1
+        
+        # Each time unit as a separate block (like RR style)
+        execution = [{"id": pid, "duration": 1} for pid in timeline]
         
         return Scheduler._format(procs, execution, "Priority (P)")
     

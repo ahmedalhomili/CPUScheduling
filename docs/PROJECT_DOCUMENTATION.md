@@ -698,6 +698,7 @@ Gantt Chart:
 
 | الخاصية | FCFS | SJF (NP) | SRTF | Priority (NP) | Priority (P) | Round Robin |
 |---------|------|----------|------|---------------|--------------|-------------|
+| **Data Structure** | Queue | Priority Queue | Priority Queue | Linked List | Linked List | Queue |
 | **التعقيد** | O(n log n) | O(n²) | O(n²) | O(n²) | O(n²) | O(n) |
 | **استباقية** | ❌ | ❌ | ✅ | ❌ | ✅ | ✅ |
 | **Starvation** | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
@@ -707,6 +708,33 @@ Gantt Chart:
 | **Response Time** | ضعيف | متوسط | جيد | متوسط | جيد | ممتاز |
 | **التنفيذ** | سهل جداً | سهل | متوسط | سهل | متوسط | سهل |
 | **الاستخدام** | Batch | Batch | Interactive | Real-time | Real-time | Time-sharing |
+
+### 5.2 Data Structures المستخدمة في كل خوارزمية
+
+| الخوارزمية | Data Structure | الملف | سبب الاستخدام |
+|------------|---------------|-------|---------------|
+| **FCFS** | Queue (طابور) | `queue.cpp` | FIFO - أول عملية تصل هي أول عملية تتنفذ. الترتيب بـ Bubble Sort حسب وقت الوصول |
+| **SJF (NP)** | Priority Queue (Min-Heap) | `priority_queue.cpp` | اختيار العملية الأقصر burst من بين العمليات المتاحة |
+| **SRTF** | Priority Queue (Min-Heap) | `priority_queue.cpp` | اختيار العملية الأقصر remaining في كل وحدة زمنية |
+| **Priority (NP)** | Linked List (قائمة مترابطة مزدوجة) | `linked_list.cpp` | البحث والحذف بمرونة من أي مكان للعملية ذات الأولوية الأعلى |
+| **Priority (P)** | Linked List (قائمة مترابطة مزدوجة) | `linked_list.cpp` | نفس السبب مع إعادة تقييم الأولوية كل وحدة زمنية |
+| **Round Robin** | Queue (طابور) | `queue.cpp` | الطابور الدائري - كل عملية تأخذ Time Quantum ثم تعود لآخر الطابور |
+
+```
+ربط الخوارزميات بهياكل البيانات:
+
+FCFS ─────────────► Queue (FIFO)
+                      │
+Round Robin ──────────┘
+
+SJF (NP) ─────────► Priority Queue (Min-Heap)
+                      │
+SRTF ─────────────────┘
+
+Priority (NP) ───► Linked List (Doubly)
+                      │
+Priority (P) ─────────┘
+```
 
 ### 5.2 متى تستخدم كل خوارزمية؟
 
