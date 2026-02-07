@@ -85,8 +85,6 @@ SchedulingResult sjf_preemptive(Process processes[], int count) {
     
     int current_time = 0;
     int completed = 0;
-    int last_process = -1;
-    int last_start = 0;
     
     while (completed < count) {
         // البحث عن العملية ذات أقصر وقت متبقي
@@ -103,34 +101,20 @@ SchedulingResult sjf_preemptive(Process processes[], int count) {
         }
         
         if (shortest_idx == -1) {
-            if (last_process != -1) {
-                result.timeline[result.timeline_length].process_id = result.processes[last_process].id;
-                result.timeline[result.timeline_length].start_time = last_start;
-                result.timeline[result.timeline_length].end_time = current_time;
-                result.timeline_length++;
-                last_process = -1;
-            }
             current_time++;
             continue;
-        }
-        
-        // تبديل العملية (preemption)
-        if (last_process != shortest_idx && last_process != -1) {
-            result.timeline[result.timeline_length].process_id = result.processes[last_process].id;
-            result.timeline[result.timeline_length].start_time = last_start;
-            result.timeline[result.timeline_length].end_time = current_time;
-            result.timeline_length++;
-        }
-        
-        if (last_process != shortest_idx) {
-            last_start = current_time;
-            last_process = shortest_idx;
         }
         
         Process& p = result.processes[shortest_idx];
         if (p.start_time == -1) {
             p.start_time = current_time;
         }
+        
+        // تسجيل كل وحدة زمنية كـ entry منفصلة
+        result.timeline[result.timeline_length].process_id = p.id;
+        result.timeline[result.timeline_length].start_time = current_time;
+        result.timeline[result.timeline_length].end_time = current_time + 1;
+        result.timeline_length++;
         
         p.remaining_time--;
         current_time++;
@@ -141,12 +125,6 @@ SchedulingResult sjf_preemptive(Process processes[], int count) {
             p.waiting_time = p.turnaround_time - p.burst_time;
             p.is_completed = true;
             completed++;
-            
-            result.timeline[result.timeline_length].process_id = p.id;
-            result.timeline[result.timeline_length].start_time = last_start;
-            result.timeline[result.timeline_length].end_time = current_time;
-            result.timeline_length++;
-            last_process = -1;
         }
     }
     

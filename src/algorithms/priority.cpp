@@ -84,8 +84,6 @@ SchedulingResult priority_preemptive(Process processes[], int count) {
     
     int current_time = 0;
     int completed = 0;
-    int last_process = -1;
-    int last_start = 0;
     
     while (completed < count) {
         int highest_idx = -1;
@@ -101,33 +99,20 @@ SchedulingResult priority_preemptive(Process processes[], int count) {
         }
         
         if (highest_idx == -1) {
-            if (last_process != -1) {
-                result.timeline[result.timeline_length].process_id = result.processes[last_process].id;
-                result.timeline[result.timeline_length].start_time = last_start;
-                result.timeline[result.timeline_length].end_time = current_time;
-                result.timeline_length++;
-                last_process = -1;
-            }
             current_time++;
             continue;
-        }
-        
-        if (last_process != highest_idx && last_process != -1) {
-            result.timeline[result.timeline_length].process_id = result.processes[last_process].id;
-            result.timeline[result.timeline_length].start_time = last_start;
-            result.timeline[result.timeline_length].end_time = current_time;
-            result.timeline_length++;
-        }
-        
-        if (last_process != highest_idx) {
-            last_start = current_time;
-            last_process = highest_idx;
         }
         
         Process& p = result.processes[highest_idx];
         if (p.start_time == -1) {
             p.start_time = current_time;
         }
+        
+        // تسجيل كل وحدة زمنية كـ entry منفصلة
+        result.timeline[result.timeline_length].process_id = p.id;
+        result.timeline[result.timeline_length].start_time = current_time;
+        result.timeline[result.timeline_length].end_time = current_time + 1;
+        result.timeline_length++;
         
         p.remaining_time--;
         current_time++;
@@ -138,12 +123,6 @@ SchedulingResult priority_preemptive(Process processes[], int count) {
             p.waiting_time = p.turnaround_time - p.burst_time;
             p.is_completed = true;
             completed++;
-            
-            result.timeline[result.timeline_length].process_id = p.id;
-            result.timeline[result.timeline_length].start_time = last_start;
-            result.timeline[result.timeline_length].end_time = current_time;
-            result.timeline_length++;
-            last_process = -1;
         }
     }
     
