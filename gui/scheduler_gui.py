@@ -1,9 +1,13 @@
 """
 CPU Scheduling Algorithms Simulator - GUI
 Using Flet Framework
+Connects to C++ backend via subprocess
 """
 
 import flet as ft
+import subprocess
+import json
+import os
 from typing import List
 
 # ============================================
@@ -31,6 +35,18 @@ COLORS = [
     ft.Colors.INDIGO_400,
 ]
 
+# Path to C++ executable (sched2.exe in project root)
+CPP_EXE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "sched2.exe")
+
+# MinGW bin path (needed for DLLs at runtime)
+MINGW_BIN = r"F:\Program Files\JetBrains\CLion 2025.2.4\bin\mingw\bin"
+
+def get_cpp_env():
+    """Get environment with MinGW in PATH so sched2.exe can find its DLLs"""
+    env = os.environ.copy()
+    env["PATH"] = MINGW_BIN + ";" + env.get("PATH", "")
+    return env
+
 
 # ============================================
 # Process Class
@@ -46,301 +62,73 @@ class Process:
 
 
 # ============================================
-# Scheduler Algorithms (Built-in Python)
+# C++ Backend Bridge (subprocess)
 # ============================================
-class Scheduler:
-    @staticmethod
-    def fcfs(processes: List[Process]) -> dict:
-        procs = sorted([{
-            "id": p.id, "name": p.name, "arrival": p.arrival,
-            "burst": p.burst, "priority": p.priority,
-            "remaining": p.burst, "completion": 0, "waiting": 0,
-            "turnaround": 0, "response": -1
-        } for p in processes], key=lambda x: x["arrival"])
-        
-        current_time = 0
-        execution = []
-        
-        for p in procs:
-            if current_time < p["arrival"]:
-                execution.append({"id": -1, "duration": p["arrival"] - current_time})
-                current_time = p["arrival"]
-            
-            p["response"] = current_time - p["arrival"]
-            execution.append({"id": p["id"], "duration": p["burst"]})
-            current_time += p["burst"]
-            p["completion"] = current_time
-            p["turnaround"] = p["completion"] - p["arrival"]
-            p["waiting"] = p["turnaround"] - p["burst"]
-        
-        return Scheduler._format(procs, execution, "FCFS")
-    
-    @staticmethod
-    def sjf(processes: List[Process]) -> dict:
-        procs = sorted([{
-            "id": p.id, "name": p.name, "arrival": p.arrival,
-            "burst": p.burst, "priority": p.priority,
-            "remaining": p.burst, "completion": 0, "waiting": 0,
-            "turnaround": 0, "response": -1
-        } for p in processes], key=lambda x: x["arrival"])
-        
-        n = len(procs)
-        current_time = 0
-        completed = 0
-        done = [False] * n
-        execution = []
-        
-        while completed < n:
-            shortest = -1
-            min_burst = float('inf')
-            
-            for i, p in enumerate(procs):
-                if not done[i] and p["arrival"] <= current_time and p["burst"] < min_burst:
-                    min_burst = p["burst"]
-                    shortest = i
-            
-            if shortest == -1:
-                next_arr = min(p["arrival"] for i, p in enumerate(procs) if not done[i])
-                execution.append({"id": -1, "duration": next_arr - current_time})
-                current_time = next_arr
-                continue
-            
-            p = procs[shortest]
-            p["response"] = current_time - p["arrival"]
-            execution.append({"id": p["id"], "duration": p["burst"]})
-            current_time += p["burst"]
-            p["completion"] = current_time
-            p["turnaround"] = p["completion"] - p["arrival"]
-            p["waiting"] = p["turnaround"] - p["burst"]
-            done[shortest] = True
-            completed += 1
-        
-        return Scheduler._format(procs, execution, "SJF")
-    
-    @staticmethod
-    def srtf(processes: List[Process]) -> dict:
-        procs = sorted([{
-            "id": p.id, "name": p.name, "arrival": p.arrival,
-            "burst": p.burst, "priority": p.priority,
-            "remaining": p.burst, "completion": 0, "waiting": 0,
-            "turnaround": 0, "response": -1
-        } for p in processes], key=lambda x: x["arrival"])
-        
-        n = len(procs)
-        current_time = 0
-        completed = 0
-        timeline = []  # per-unit timeline
-        
-        while completed < n:
-            shortest = -1
-            min_rem = float('inf')
-            
-            for i, p in enumerate(procs):
-                if p["arrival"] <= current_time and p["remaining"] > 0 and p["remaining"] < min_rem:
-                    min_rem = p["remaining"]
-                    shortest = i
-            
-            if shortest == -1:
-                arrivals = [p["arrival"] for p in procs if p["remaining"] > 0]
-                if arrivals:
-                    next_arr = min(arrivals)
-                    for t in range(current_time, next_arr):
-                        timeline.append(-1)
-                    current_time = next_arr
-                continue
-            
-            p = procs[shortest]
-            if p["response"] == -1:
-                p["response"] = current_time - p["arrival"]
-            
-            timeline.append(p["id"])
-            p["remaining"] -= 1
-            current_time += 1
-            
-            if p["remaining"] == 0:
-                p["completion"] = current_time
-                p["turnaround"] = p["completion"] - p["arrival"]
-                p["waiting"] = p["turnaround"] - p["burst"]
-                completed += 1
-        
-        # Each time unit as a separate block (like RR style)
-        execution = [{"id": pid, "duration": 1} for pid in timeline]
-        
-        return Scheduler._format(procs, execution, "SRTF")
-    
-    @staticmethod
-    def priority_np(processes: List[Process]) -> dict:
-        procs = sorted([{
-            "id": p.id, "name": p.name, "arrival": p.arrival,
-            "burst": p.burst, "priority": p.priority,
-            "remaining": p.burst, "completion": 0, "waiting": 0,
-            "turnaround": 0, "response": -1
-        } for p in processes], key=lambda x: x["arrival"])
-        
-        n = len(procs)
-        current_time = 0
-        completed = 0
-        done = [False] * n
-        execution = []
-        
-        while completed < n:
-            highest = -1
-            min_pri = float('inf')
-            
-            for i, p in enumerate(procs):
-                if not done[i] and p["arrival"] <= current_time and p["priority"] < min_pri:
-                    min_pri = p["priority"]
-                    highest = i
-            
-            if highest == -1:
-                next_arr = min(p["arrival"] for i, p in enumerate(procs) if not done[i])
-                execution.append({"id": -1, "duration": next_arr - current_time})
-                current_time = next_arr
-                continue
-            
-            p = procs[highest]
-            p["response"] = current_time - p["arrival"]
-            execution.append({"id": p["id"], "duration": p["burst"]})
-            current_time += p["burst"]
-            p["completion"] = current_time
-            p["turnaround"] = p["completion"] - p["arrival"]
-            p["waiting"] = p["turnaround"] - p["burst"]
-            done[highest] = True
-            completed += 1
-        
-        return Scheduler._format(procs, execution, "Priority (NP)")
-    
-    @staticmethod
-    def priority_p(processes: List[Process]) -> dict:
-        procs = sorted([{
-            "id": p.id, "name": p.name, "arrival": p.arrival,
-            "burst": p.burst, "priority": p.priority,
-            "remaining": p.burst, "completion": 0, "waiting": 0,
-            "turnaround": 0, "response": -1
-        } for p in processes], key=lambda x: x["arrival"])
-        
-        n = len(procs)
-        current_time = 0
-        completed = 0
-        timeline = []  # per-unit timeline
-        
-        while completed < n:
-            highest = -1
-            min_pri = float('inf')
-            
-            for i, p in enumerate(procs):
-                if p["arrival"] <= current_time and p["remaining"] > 0 and p["priority"] < min_pri:
-                    min_pri = p["priority"]
-                    highest = i
-            
-            if highest == -1:
-                arrivals = [p["arrival"] for p in procs if p["remaining"] > 0]
-                if arrivals:
-                    next_arr = min(arrivals)
-                    for t in range(current_time, next_arr):
-                        timeline.append(-1)
-                    current_time = next_arr
-                continue
-            
-            p = procs[highest]
-            if p["response"] == -1:
-                p["response"] = current_time - p["arrival"]
-            
-            timeline.append(p["id"])
-            p["remaining"] -= 1
-            current_time += 1
-            
-            if p["remaining"] == 0:
-                p["completion"] = current_time
-                p["turnaround"] = p["completion"] - p["arrival"]
-                p["waiting"] = p["turnaround"] - p["burst"]
-                completed += 1
-        
-        # Each time unit as a separate block (like RR style)
-        execution = [{"id": pid, "duration": 1} for pid in timeline]
-        
-        return Scheduler._format(procs, execution, "Priority (P)")
-    
-    @staticmethod
-    def round_robin(processes: List[Process], quantum: int) -> dict:
-        procs = sorted([{
-            "id": p.id, "name": p.name, "arrival": p.arrival,
-            "burst": p.burst, "priority": p.priority,
-            "remaining": p.burst, "completion": 0, "waiting": 0,
-            "turnaround": 0, "response": -1
-        } for p in processes], key=lambda x: x["arrival"])
-        
-        n = len(procs)
-        current_time = 0
-        completed = 0
-        queue = []
-        idx = 0
-        execution = []
-        
-        while idx < n and procs[idx]["arrival"] <= current_time:
-            queue.append(procs[idx])
-            idx += 1
-        
-        while completed < n:
-            if not queue:
-                if idx < n:
-                    execution.append({"id": -1, "duration": procs[idx]["arrival"] - current_time})
-                    current_time = procs[idx]["arrival"]
-                    while idx < n and procs[idx]["arrival"] <= current_time:
-                        queue.append(procs[idx])
-                        idx += 1
-                continue
-            
-            p = queue.pop(0)
-            if p["response"] == -1:
-                p["response"] = current_time - p["arrival"]
-            
-            exec_time = min(quantum, p["remaining"])
-            execution.append({"id": p["id"], "duration": exec_time})
-            p["remaining"] -= exec_time
-            current_time += exec_time
-            
-            while idx < n and procs[idx]["arrival"] <= current_time:
-                queue.append(procs[idx])
-                idx += 1
-            
-            if p["remaining"] > 0:
-                queue.append(p)
-            else:
-                p["completion"] = current_time
-                p["turnaround"] = p["completion"] - p["arrival"]
-                p["waiting"] = p["turnaround"] - p["burst"]
-                completed += 1
-        
-        return Scheduler._format(procs, execution, f"Round Robin (Q={quantum})")
-    
-    @staticmethod
-    def _format(procs, execution, name):
-        total_burst = sum(p["burst"] for p in procs)
-        total_time = sum(e["duration"] for e in execution)
-        n = len(procs)
-        return {
-            "algorithm": name,
-            "processes": procs,
-            "execution": execution,
-            "avg_waiting": sum(p["waiting"] for p in procs) / n,
-            "avg_turnaround": sum(p["turnaround"] for p in procs) / n,
-            "cpu_util": (total_burst / total_time * 100) if total_time > 0 else 0,
-        }
-    
-    @staticmethod
-    def run(processes: List[Process], algo: int, quantum: int = 2):
-        if algo == 1: return Scheduler.fcfs(processes)
-        elif algo == 2: return Scheduler.sjf(processes)
-        elif algo == 3: return Scheduler.srtf(processes)
-        elif algo == 4: return Scheduler.priority_np(processes)
-        elif algo == 5: return Scheduler.priority_p(processes)
-        elif algo == 6: return Scheduler.round_robin(processes, quantum)
-        return {}
-    
-    @staticmethod
-    def run_all(processes: List[Process], quantum: int = 2):
-        return [Scheduler.run(processes, i, quantum) for i in range(1, 7)]
+def call_cpp_scheduler(processes: List[Process], algo: int, quantum: int = 2) -> dict:
+    """Call C++ exe with --json mode and return parsed result"""
+    stdin_data = f"{len(processes)}\n"
+    for p in processes:
+        stdin_data += f"{p.arrival} {p.burst} {p.priority}\n"
+
+    cmd = [CPP_EXE, "--json", "--algo", str(algo), "--quantum", str(quantum)]
+    result = subprocess.run(cmd, input=stdin_data, capture_output=True, text=True, timeout=10, env=get_cpp_env())
+
+    if result.returncode != 0:
+        raise RuntimeError(f"C++ error: {result.stderr}")
+
+    data = json.loads(result.stdout)
+    return convert_cpp_result(data, processes)
+
+
+def call_cpp_all(processes: List[Process], quantum: int = 2) -> List[dict]:
+    """Call C++ exe with --json --all and return all results"""
+    stdin_data = f"{len(processes)}\n"
+    for p in processes:
+        stdin_data += f"{p.arrival} {p.burst} {p.priority}\n"
+
+    cmd = [CPP_EXE, "--json", "--all", "--quantum", str(quantum)]
+    result = subprocess.run(cmd, input=stdin_data, capture_output=True, text=True, timeout=10, env=get_cpp_env())
+
+    if result.returncode != 0:
+        raise RuntimeError(f"C++ error: {result.stderr}")
+
+    data = json.loads(result.stdout)
+    return [convert_cpp_result(r, processes) for r in data]
+
+
+def convert_cpp_result(data: dict, processes: List[Process]) -> dict:
+    """Convert C++ JSON output to GUI display format"""
+    procs = []
+    for p in data["processes"]:
+        procs.append({
+            "id": p["id"],
+            "name": f"P{p['id']}",
+            "arrival": p["arrival"],
+            "burst": p["burst"],
+            "priority": p["priority"],
+            "completion": p["completion"],
+            "waiting": p["waiting"],
+            "turnaround": p["turnaround"],
+        })
+
+    # Build execution list from C++ timeline (start/end pairs)
+    execution = []
+    for t in data["timeline"]:
+        execution.append({
+            "id": t["process_id"],
+            "start": t["start"],
+            "end": t["end"],
+            "duration": t["end"] - t["start"],
+        })
+
+    return {
+        "algorithm": data["algorithm"],
+        "processes": procs,
+        "execution": execution,
+        "avg_waiting": data["avg_waiting_time"],
+        "avg_turnaround": data["avg_turnaround_time"],
+        "cpu_util": data["cpu_utilization"],
+    }
 
 
 # ============================================
@@ -352,21 +140,21 @@ def main(page: ft.Page):
     page.bgcolor = "#1a1a2e"
     page.padding = 20
     page.scroll = ft.ScrollMode.AUTO
-    
+
     # State
     processes: List[Process] = []
-    
+
     # Results container
     results_view = ft.Column(spacing=20)
-    
+
     # Process list view
     process_list = ft.Column(spacing=8)
-    
+
     def get_color(pid: int):
         if pid == -1:
             return ft.Colors.GREY_600
         return COLORS[(pid - 1) % len(COLORS)]
-    
+
     def update_process_list():
         process_list.controls.clear()
         if not processes:
@@ -396,7 +184,7 @@ def main(page: ft.Page):
                     )
                 )
         page.update()
-    
+
     def delete_process(pid: int):
         nonlocal processes
         processes = [p for p in processes if p.id != pid]
@@ -405,13 +193,13 @@ def main(page: ft.Page):
             p.name = f"P{i + 1}"
             p.color = COLORS[i % len(COLORS)]
         update_process_list()
-    
+
     # Input fields
     arrival_input = ft.TextField(label="Arrival Time", width=120, value="0")
     burst_input = ft.TextField(label="Burst Time", width=120, value="1")
     priority_input = ft.TextField(label="Priority", width=120, value="1")
     quantum_input = ft.TextField(label="Quantum", width=100, value="2")
-    
+
     algo_dropdown = ft.Dropdown(
         label="Algorithm",
         width=250,
@@ -419,17 +207,17 @@ def main(page: ft.Page):
                 [ft.dropdown.Option("all", "Run All Algorithms")],
         value="1",
     )
-    
+
     def add_process(e):
         try:
             arrival = int(arrival_input.value or 0)
             burst = int(burst_input.value or 1)
             priority = int(priority_input.value or 1)
-            
+
             if burst <= 0:
                 show_error("Burst time must be > 0")
                 return
-            
+
             pid = len(processes) + 1
             processes.append(Process(pid, arrival, burst, priority))
             arrival_input.value = ""
@@ -438,7 +226,7 @@ def main(page: ft.Page):
             update_process_list()
         except ValueError:
             show_error("Enter valid numbers")
-    
+
     def load_sample(e):
         nonlocal processes
         processes = [
@@ -447,31 +235,31 @@ def main(page: ft.Page):
             Process(3, 2, 9, 3)
         ]
         update_process_list()
-    
+
     def clear_all(e):
         nonlocal processes
         processes = []
         results_view.controls.clear()
         update_process_list()
-    
+
     def show_error(msg):
         page.snack_bar = ft.SnackBar(ft.Text(msg), bgcolor=ft.Colors.RED_700)
         page.snack_bar.open = True
         page.update()
-    
+
     def create_gantt_chart(result: dict):
         execution = result["execution"]
         items = []
         markers = []
-        time = 0
-        total = sum(e["duration"] for e in execution)
-        
+        total_time = execution[-1]["end"] if execution else 1
+
         for e in execution:
             pid, dur = e["id"], e["duration"]
+            start = e["start"]
             name = "IDLE" if pid == -1 else f"P{pid}"
             color = get_color(pid)
-            width = max(45, (dur / total) * 500)
-            
+            width = max(45, (dur / total_time) * 500)
+
             items.append(
                 ft.Container(
                     content=ft.Column([
@@ -485,11 +273,12 @@ def main(page: ft.Page):
                     alignment=ft.Alignment(0, 0),
                 )
             )
-            markers.append(ft.Container(ft.Text(str(time), size=9), width=width))
-            time += dur
-        
-        markers.append(ft.Text(str(time), size=9))
-        
+            markers.append(ft.Container(ft.Text(str(start), size=9), width=width))
+
+        # Last time marker
+        if execution:
+            markers.append(ft.Text(str(execution[-1]["end"]), size=9))
+
         return ft.Container(
             content=ft.Column([
                 ft.Text("Gantt Chart", weight=ft.FontWeight.BOLD, size=13),
@@ -500,10 +289,10 @@ def main(page: ft.Page):
             bgcolor="#252545",
             border_radius=10,
         )
-    
+
     def create_result_card(result: dict):
         procs = result["processes"]
-        
+
         # Table rows
         rows = []
         for p in procs:
@@ -518,7 +307,7 @@ def main(page: ft.Page):
                 ft.DataCell(ft.Text(str(p["waiting"]))),
                 ft.DataCell(ft.Text(str(p["turnaround"]))),
             ]))
-        
+
         table = ft.DataTable(
             columns=[
                 ft.DataColumn(ft.Text("Process")),
@@ -529,10 +318,10 @@ def main(page: ft.Page):
                 ft.DataColumn(ft.Text("Turnaround")),
             ],
             rows=rows,
-            border=ft.Border.all(1, "#444"),
+            border=ft.border.all(1, "#444"),
             border_radius=8,
         )
-        
+
         stats = ft.Row([
             ft.Container(
                 ft.Column([
@@ -556,7 +345,7 @@ def main(page: ft.Page):
                 padding=12, bgcolor="#f57c00", border_radius=10, expand=True,
             ),
         ], spacing=10)
-        
+
         return ft.Container(
             content=ft.Column([
                 ft.Text(result["algorithm"], size=18, weight=ft.FontWeight.BOLD),
@@ -570,18 +359,18 @@ def main(page: ft.Page):
             padding=20,
             bgcolor="#1e1e3f",
             border_radius=15,
-            border=ft.Border.all(1, "#3a3a6a"),
+            border=ft.border.all(1, "#3a3a6a"),
         )
-    
+
     def create_comparison(results: List[dict]):
         rows = []
         best_wt = min(results, key=lambda x: x["avg_waiting"])
         best_tat = min(results, key=lambda x: x["avg_turnaround"])
-        
+
         for r in results:
             wt_style = ft.FontWeight.BOLD if r == best_wt else None
             tat_style = ft.FontWeight.BOLD if r == best_tat else None
-            
+
             rows.append(ft.DataRow(cells=[
                 ft.DataCell(ft.Text(r["algorithm"])),
                 ft.DataCell(ft.Text(f"{r['avg_waiting']:.2f}", weight=wt_style,
@@ -590,7 +379,7 @@ def main(page: ft.Page):
                            color=ft.Colors.GREEN_400 if r == best_tat else None)),
                 ft.DataCell(ft.Text(f"{r['cpu_util']:.1f}%")),
             ]))
-        
+
         return ft.Container(
             content=ft.Column([
                 ft.Text("Comparison", size=18, weight=ft.FontWeight.BOLD),
@@ -602,7 +391,7 @@ def main(page: ft.Page):
                         ft.DataColumn(ft.Text("CPU %")),
                     ],
                     rows=rows,
-                    border=ft.Border.all(1, "#444"),
+                    border=ft.border.all(1, "#444"),
                     border_radius=8,
                 ),
                 ft.Container(height=10),
@@ -612,43 +401,62 @@ def main(page: ft.Page):
             padding=20,
             bgcolor="#1e1e3f",
             border_radius=15,
-            border=ft.Border.all(1, "#3a3a6a"),
+            border=ft.border.all(1, "#3a3a6a"),
         )
-    
+
     def run_algorithm(e):
         if not processes:
             show_error("Add processes first!")
             return
-        
+
         results_view.controls.clear()
         algo = algo_dropdown.value
         quantum = int(quantum_input.value or 2)
-        
-        if algo == "all":
-            results = Scheduler.run_all(processes, quantum)
-            results_view.controls.append(create_comparison(results))
-            for r in results:
-                results_view.controls.append(create_result_card(r))
-        else:
-            result = Scheduler.run(processes, int(algo), quantum)
-            results_view.controls.append(create_result_card(result))
-        
+
+        try:
+            if algo == "all":
+                results = call_cpp_all(processes, quantum)
+                results_view.controls.append(create_comparison(results))
+                for r in results:
+                    results_view.controls.append(create_result_card(r))
+            else:
+                result = call_cpp_scheduler(processes, int(algo), quantum)
+                results_view.controls.append(create_result_card(result))
+        except FileNotFoundError:
+            show_error(f"C++ exe not found: {CPP_EXE}")
+        except json.JSONDecodeError as ex:
+            show_error(f"JSON parse error: {ex}")
+        except Exception as ex:
+            show_error(f"Error: {ex}")
+
         page.update()
-    
+
     # Initialize
     update_process_list()
-    
+
+    # Check C++ backend connection
+    cpp_exists = os.path.exists(CPP_EXE)
+    status_color = ft.Colors.GREEN_400 if cpp_exists else ft.Colors.RED_400
+    status_text = "C++ Backend Connected" if cpp_exists else "C++ exe not found!"
+
     # Build UI
     page.add(
-        # Header
+        # Header with connection status
         ft.Container(
             ft.Row([
                 ft.Icon(ft.Icons.MEMORY, size=35, color=ft.Colors.BLUE_400),
                 ft.Text("CPU Scheduling Simulator", size=26, weight=ft.FontWeight.BOLD),
+                ft.Container(expand=True),
+                ft.Container(
+                    ft.Row([
+                        ft.Icon(ft.Icons.CIRCLE, size=10, color=status_color),
+                        ft.Text(status_text, size=11, color=status_color),
+                    ], spacing=5),
+                ),
             ], spacing=15),
-            margin=ft.Margin.only(bottom=20),
+            margin=ft.margin.only(bottom=20),
         ),
-        
+
         # Add Process Section
         ft.Container(
             ft.Column([
@@ -665,9 +473,9 @@ def main(page: ft.Page):
             bgcolor="#252545",
             border_radius=12,
         ),
-        
+
         ft.Container(height=15),
-        
+
         # Process List
         ft.Container(
             ft.Column([
@@ -678,9 +486,9 @@ def main(page: ft.Page):
             bgcolor="#252545",
             border_radius=12,
         ),
-        
+
         ft.Container(height=15),
-        
+
         # Run Section
         ft.Container(
             ft.Column([
@@ -696,9 +504,9 @@ def main(page: ft.Page):
             bgcolor="#252545",
             border_radius=12,
         ),
-        
+
         ft.Container(height=20),
-        
+
         # Results
         results_view,
     )
